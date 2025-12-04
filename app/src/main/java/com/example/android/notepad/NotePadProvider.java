@@ -82,6 +82,8 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
             NotePad.Notes._ID,               // Projection position 0, the note's id
             NotePad.Notes.COLUMN_NAME_NOTE,  // Projection position 1, the note's content
             NotePad.Notes.COLUMN_NAME_TITLE, // Projection position 2, the note's title
+            NotePad.Notes.COLUMN_NAME_CATEGORY
+
     };
     private static final int READ_NOTE_NOTE_INDEX = 1;
     private static final int READ_NOTE_TITLE_INDEX = 2;
@@ -156,6 +158,9 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
                 NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE,
                 NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE);
 
+
+        // 添加这行：映射 "category" 到实际的数据库列
+        sNotesProjectionMap.put("category", NotePad.Notes.COLUMN_NAME_CATEGORY);
         /*
          * Creates an initializes a projection map for handling Live Folders
          */
@@ -196,8 +201,10 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
                    + NotePad.Notes.COLUMN_NAME_TITLE + " TEXT,"
                    + NotePad.Notes.COLUMN_NAME_NOTE + " TEXT,"
                    + NotePad.Notes.COLUMN_NAME_CREATE_DATE + " INTEGER,"
-                   + NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE + " INTEGER"
+                   + NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE + " INTEGER,"
+                   + NotePad.Notes.COLUMN_NAME_CATEGORY + " TEXT DEFAULT '默认'" // 添加分类字段
                    + ");");
+
        }
 
        /**
@@ -209,16 +216,18 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         */
        @Override
        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+           Log.w(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
 
-           // Logs that the database is being upgraded
-           Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
-                   + newVersion + ", which will destroy all old data");
+           // 根据旧版本号逐步升级
+           if (oldVersion < 2) {
+               // 从版本1升级到版本2：添加category字段
+               db.execSQL("ALTER TABLE " + NotePad.Notes.TABLE_NAME +
+                       " ADD COLUMN " + NotePad.Notes.COLUMN_NAME_CATEGORY +
+                       " TEXT DEFAULT '默认'");
+               Log.i("NotePadProvider", "已添加category列");
+           }
 
-           // Kills the table and existing data
-           db.execSQL("DROP TABLE IF EXISTS notes");
 
-           // Recreates the database with a new version
-           onCreate(db);
        }
    }
 
@@ -515,6 +524,10 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
             values = new ContentValues();
         }
 
+
+
+
+
         // Gets the current system time in milliseconds
         Long now = Long.valueOf(System.currentTimeMillis());
 
@@ -539,6 +552,8 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         if (values.containsKey(NotePad.Notes.COLUMN_NAME_NOTE) == false) {
             values.put(NotePad.Notes.COLUMN_NAME_NOTE, "");
         }
+
+
 
         // Opens the database object in "write" mode.
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
@@ -728,10 +743,6 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
                 throw new IllegalArgumentException("Unknown URI " + uri);
         }
 
-        /*Gets a handle to the content resolver object for the current context, and notifies it
-         * that the incoming URI changed. The object passes this along to the resolver framework,
-         * and observers that have registered themselves for the provider are notified.
-         */
         getContext().getContentResolver().notifyChange(uri, null);
 
         // Returns the number of rows updated.

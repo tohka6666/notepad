@@ -19,12 +19,14 @@ package com.example.android.notepad;
 import static com.example.android.notepad.R.*;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -38,32 +40,33 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
-/**
- * This Activity handles "editing" a note, where editing is responding to
- * {@link Intent#ACTION_VIEW} (request to view data), edit a note
- * {@link Intent#ACTION_EDIT}, create a note {@link Intent#ACTION_INSERT}, or
- * create a new note from the current contents of the clipboard {@link Intent#ACTION_PASTE}.
- *
- * NOTE: Notice that the provider operations in this Activity are taking place on the UI thread.
- * This is not a good practice. It is only done here to make the code more readable. A real
- * application should use the {@link android.content.AsyncQueryHandler}
- * or {@link android.os.AsyncTask} object to perform operations asynchronously on a separate thread.
- */
+import java.util.List;
+
+
 public class NoteEditor extends Activity {
     // For logging and debugging purposes
     private static final String TAG = "NoteEditor";
+
+    // 添加成员变量
+    private String mCurrentCategory = "默认";
+    private Button btnCategory;
 
     /*
      * Creates a projection that returns the note ID and the note contents.
      */
     private static final String[] PROJECTION =
-        new String[] {
-            NotePad.Notes._ID,
-            NotePad.Notes.COLUMN_NAME_TITLE,
-            NotePad.Notes.COLUMN_NAME_NOTE
-    };
+            new String[] {
+                    NotePad.Notes._ID,
+                    NotePad.Notes.COLUMN_NAME_TITLE,
+                    NotePad.Notes.COLUMN_NAME_NOTE,
+                    NotePad.Notes.COLUMN_NAME_CREATE_DATE,      // 添加创建时间
+                    NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE // 添加修改时间
+            };
 
     // A label for the saved state of the activity
     private static final String ORIGINAL_CONTENT = "origContent";
@@ -79,6 +82,9 @@ public class NoteEditor extends Activity {
     private Cursor mCursor;
     private EditText mText;
     private String mOriginalContent;
+
+    // 记录当前主题，用于检测主题是否改变
+    private int currentTheme = ThemeUtils.THEME_LIGHT;
 
     /**
      * Defines a custom EditText View that draws lines between each line of text that is displayed.
@@ -120,11 +126,7 @@ public class NoteEditor extends Activity {
                 // Gets the baseline coordinates for the current line of text
                 int baseline = getLineBounds(i, r);
 
-                /*
-                 * Draws a line in the background from the left of the rectangle to the right,
-                 * at a vertical position one dip below the baseline, using the "paint" object
-                 * for details.
-                 */
+
                 canvas.drawLine(r.left, baseline + 1, r.right, baseline + 1, paint);
             }
 
@@ -139,17 +141,20 @@ public class NoteEditor extends Activity {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
+        // 记录当前主题
+        currentTheme = ThemeUtils.getCurrentTheme(this);
         super.onCreate(savedInstanceState);
 
-        /*
-         * Creates an Intent to use when the Activity object's result is sent back to the
-         * caller.
-         */
+
+        // 启用ActionBar的返回按钮
+        if (getActionBar() != null) {
+            getActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
         final Intent intent = getIntent();
 
-        /*
-         *  Sets up for the edit, based on the action specified for the incoming Intent.
-         */
 
         // Gets the action that triggered the intent filter for this Activity
         final String action = intent.getAction();
@@ -168,13 +173,16 @@ public class NoteEditor extends Activity {
             // Sets the Activity state to INSERT, gets the general note URI, and inserts an
             // empty record in the provider
             mState = STATE_INSERT;
-            mUri = getContentResolver().insert(intent.getData(), null);
 
-            /*
-             * If the attempt to insert the new note fails, shuts down this Activity. The
-             * originating Activity receives back RESULT_CANCELED if it requested a result.
-             * Logs that the insert failed.
-             */
+            // 创建包含初始时间戳的ContentValues
+            ContentValues initialValues = new ContentValues();
+            long currentTime = System.currentTimeMillis();
+            initialValues.put(NotePad.Notes.COLUMN_NAME_CREATE_DATE, currentTime);
+            initialValues.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, currentTime);
+
+            mUri = getContentResolver().insert(intent.getData(), initialValues);
+
+
             if (mUri == null) {
 
                 // Writes the log identifier, a message, and the URI that failed.
@@ -185,34 +193,25 @@ public class NoteEditor extends Activity {
                 return;
             }
 
-            // Since the new entry was created, this sets the result to be returned
-            // set the result to be returned.
+
             setResult(RESULT_OK, (new Intent()).setAction(mUri.toString()));
 
-        // If the action was other than EDIT or INSERT:
+            // If the action was other than EDIT or INSERT:
         } else {
 
-            // Logs an error that the action was not understood, finishes the Activity, and
-            // returns RESULT_CANCELED to an originating Activity.
+
             Log.e(TAG, "Unknown action, exiting");
             finish();
             return;
         }
 
-        /*
-         * Using the URI passed in with the triggering Intent, gets the note or notes in
-         * the provider.
-         * Note: This is being done on the UI thread. It will block the thread until the query
-         * completes. In a sample app, going against a simple provider based on a local database,
-         * the block will be momentary, but in a real app you should use
-         * android.content.AsyncQueryHandler or android.os.AsyncTask.
-         */
+
         mCursor = managedQuery(
-            mUri,         // The URI that gets multiple notes from the provider.
-            PROJECTION,   // A projection that returns the note ID and note content for each note.
-            null,         // No "where" clause selection criteria.
-            null,         // No "where" clause selection values.
-            null          // Use the default sort order (modification date, descending)
+                mUri,         // The URI that gets multiple notes from the provider.
+                PROJECTION,   // A projection that returns the note ID and note content for each note.
+                null,         // No "where" clause selection criteria.
+                null,         // No "where" clause selection values.
+                null          // Use the default sort order (modification date, descending)
         );
 
         // For a paste, initializes the data from clipboard.
@@ -230,13 +229,31 @@ public class NoteEditor extends Activity {
         // Gets a handle to the EditText in the the layout.
         mText = (EditText) findViewById(R.id.note);
 
-        /*
-         * If this Activity had stopped previously, its state was written the ORIGINAL_CONTENT
-         * location in the saved Instance state. This gets the state.
-         */
+
         if (savedInstanceState != null) {
             mOriginalContent = savedInstanceState.getString(ORIGINAL_CONTENT);
         }
+
+        // 初始化分类按钮
+        btnCategory = (Button) findViewById(R.id.btn_category);
+        if (btnCategory != null) {
+            // 先获取分类并保存到成员变量
+            String currentCategory = getNoteCategory();
+            mCurrentCategory = currentCategory;  // 确保成员变量被设置
+
+            // 设置按钮文本
+            btnCategory.setText(currentCategory);
+
+            // 设置点击事件
+            btnCategory.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showCategoryDialog();
+                }
+            });
+        }
+
+
     }
 
     /**
@@ -274,7 +291,7 @@ public class NoteEditor extends Activity {
                 Resources res = getResources();
                 String text = String.format(res.getString(R.string.title_edit), title);
                 setTitle(text);
-            // Sets the title to "create" for inserts
+                // Sets the title to "create" for inserts
             } else if (mState == STATE_INSERT) {
                 setTitle(getText(R.string.title_create));
             }
@@ -297,10 +314,10 @@ public class NoteEditor extends Activity {
                 mOriginalContent = note;
             }
 
-        /*
-         * Something is wrong. The Cursor should always contain data. Report an error in the
-         * note.
-         */
+            /*
+             * Something is wrong. The Cursor should always contain data. Report an error in the
+             * note.
+             */
         } else {
             setTitle(getText(R.string.error_title));
             mText.setText(getText(R.string.error_message));
@@ -372,7 +389,7 @@ public class NoteEditor extends Activity {
             } else if (mState == STATE_INSERT) {
                 updateNote(text, text);
                 mState = STATE_EDIT;
-          }
+            }
         }
     }
 
@@ -392,7 +409,7 @@ public class NoteEditor extends Activity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.editor_options_menu, menu);
 
-        // Only add extra menu items for a saved note 
+        // Only add extra menu items for a saved note
         if (mState == STATE_EDIT) {
             // Append to the
             // menu items for any other activities that can do stuff with it
@@ -405,7 +422,16 @@ public class NoteEditor extends Activity {
                     new ComponentName(this, NoteEditor.class), null, intent, 0, null);
         }
 
-        return super.onCreateOptionsMenu(menu);
+        super.onCreateOptionsMenu(menu);
+
+        // 添加分类菜单项
+        menu.add(0, 999, 0, "设置分类")
+                .setIcon(android.R.drawable.ic_menu_sort_by_size)
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+        return true;
+
+
     }
 
     @Override
@@ -433,18 +459,42 @@ public class NoteEditor extends Activity {
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle all of the possible menu actions.
         int id = item.getItemId();
-        if(id== R.id.menu_save) {
+
+        // 处理保存菜单
+        if (id == R.id.menu_save) {
             String text = mText.getText().toString();
             updateNote(text, null);
             finish();
-        } else if (id == R.id.menu_delete) {
+            return true;
+        }
+
+        // 处理删除菜单
+        if (id == R.id.menu_delete) {
             deleteNote();
             finish();
-        } else if (id == R.id.menu_revert) {
-            cancelNote();
+            return true;
         }
+
+        // 处理取消/恢复菜单
+        if (id == R.id.menu_revert) {
+            cancelNote();
+            return true;
+        }
+
+        // 处理返回按钮
+        if (id == android.R.id.home) {
+            // 直接返回，不显示分类对话框
+            finish();
+            return true;
+        }
+
+        // 处理分类菜单（ID为999）
+        if (id == 999) {
+            showCategoryDialog();
+            return true;
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -492,8 +542,8 @@ public class NoteEditor extends Activity {
                 // (moveToFirst() returns true), then this gets the note data from it.
                 if (orig != null) {
                     if (orig.moveToFirst()) {
-                        int colNoteIndex = mCursor.getColumnIndex(NotePad.Notes.COLUMN_NAME_NOTE);
-                        int colTitleIndex = mCursor.getColumnIndex(NotePad.Notes.COLUMN_NAME_TITLE);
+                        int colNoteIndex = orig.getColumnIndex(NotePad.Notes.COLUMN_NAME_NOTE);
+                        int colTitleIndex = orig.getColumnIndex(NotePad.Notes.COLUMN_NAME_TITLE);
                         text = orig.getString(colNoteIndex);
                         title = orig.getString(colTitleIndex);
                     }
@@ -520,63 +570,35 @@ public class NoteEditor extends Activity {
      * @param text The new note contents to use.
      * @param title The new note title to use
      */
+
     private final void updateNote(String text, String title) {
-
-        // Sets up a map to contain values to be updated in the provider.
         ContentValues values = new ContentValues();
-        values.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, System.currentTimeMillis());
+        long now = System.currentTimeMillis();
 
-        // If the action is to insert a new note, this creates an initial title for it.
-        if (mState == STATE_INSERT) {
+        values.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, now);
 
-            // If no title was provided as an argument, create one from the note text.
-            if (title == null) {
-  
-                // Get the note's length
-                int length = text.length();
+        // 使用成员变量中的分类
+        values.put(NotePad.Notes.COLUMN_NAME_CATEGORY, mCurrentCategory);
 
-                // Sets the title by getting a substring of the text that is 31 characters long
-                // or the number of characters in the note plus one, whichever is smaller.
-                title = text.substring(0, Math.min(30, length));
-  
-                // If the resulting length is more than 30 characters, chops off any
-                // trailing spaces
-                if (length > 30) {
-                    int lastSpace = title.lastIndexOf(' ');
-                    if (lastSpace > 0) {
-                        title = title.substring(0, lastSpace);
-                    }
-                }
-            }
-            // In the values map, sets the value of the title
-            values.put(NotePad.Notes.COLUMN_NAME_TITLE, title);
-        } else if (title != null) {
-            // In the values map, sets the value of the title
+        if (title != null) {
             values.put(NotePad.Notes.COLUMN_NAME_TITLE, title);
         }
 
-        // This puts the desired notes text into the map.
-        values.put(NotePad.Notes.COLUMN_NAME_NOTE, text);
+        if (text != null) {
+            values.put(NotePad.Notes.COLUMN_NAME_NOTE, text);
+        }
 
-        /*
-         * Updates the provider with the new values in the map. The ListView is updated
-         * automatically. The provider sets this up by setting the notification URI for
-         * query Cursor objects to the incoming URI. The content resolver is thus
-         * automatically notified when the Cursor for the URI changes, and the UI is
-         * updated.
-         * Note: This is being done on the UI thread. It will block the thread until the
-         * update completes. In a sample app, going against a simple provider based on a
-         * local database, the block will be momentary, but in a real app you should use
-         * android.content.AsyncQueryHandler or android.os.AsyncTask.
-         */
-        getContentResolver().update(
-                mUri,    // The URI for the record to update.
-                values,  // The map of column names and new values to apply to them.
-                null,    // No selection criteria are used, so no where columns are necessary.
-                null     // No where columns are used, so no where arguments are necessary.
-            );
+        if (mState == STATE_INSERT) {
+            if (title == null && text != null) {
+                title = text.substring(0, Math.min(30, text.length()));
+            }
+            values.put(NotePad.Notes.COLUMN_NAME_CREATE_DATE, now);
+            values.put(NotePad.Notes.COLUMN_NAME_TITLE, title);
 
-
+            getContentResolver().insert(getIntent().getData(), values);
+        } else {
+            getContentResolver().update(mUri, values, null, null);
+        }
     }
 
     /**
@@ -591,6 +613,8 @@ public class NoteEditor extends Activity {
                 mCursor = null;
                 ContentValues values = new ContentValues();
                 values.put(NotePad.Notes.COLUMN_NAME_NOTE, mOriginalContent);
+                // 恢复时也更新时间戳
+                values.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, System.currentTimeMillis());
                 getContentResolver().update(mUri, values, null, null);
             } else if (mState == STATE_INSERT) {
                 // We inserted an empty note, make sure to delete it
@@ -612,4 +636,128 @@ public class NoteEditor extends Activity {
             mText.setText("");
         }
     }
+
+    // 显示分类选择对话框
+    private void showCategoryDialog() {
+        List<String> categories = CategoryUtils.getAllCategories(this);
+
+        // 获取当前笔记的分类
+        String currentCategory = getNoteCategory();
+        int checkedItem = categories.indexOf(currentCategory);
+        if (checkedItem < 0) checkedItem = 0;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("选择分类");
+
+        builder.setSingleChoiceItems(
+                categories.toArray(new String[0]),
+                checkedItem,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String selected = categories.get(which);
+                        updateNoteCategory(selected);
+                        dialog.dismiss();
+                        Toast.makeText(NoteEditor.this,
+                                "分类已设置为: " + selected, Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+
+        builder.setNegativeButton("取消", null);
+        builder.show();
+    }
+
+    // 获取当前笔记的分类
+    private String getNoteCategory() {
+        Log.d("NoteEditor", "=== 开始获取分类 ===");
+        Log.d("NoteEditor", "mUri: " + mUri);
+
+        // 先检查成员变量
+        if (mCurrentCategory != null && !mCurrentCategory.equals("默认")) {
+            Log.d("NoteEditor", "使用成员变量分类: " + mCurrentCategory);
+            return mCurrentCategory;
+        }
+
+        String defaultCategory = "默认";
+
+        if (mUri == null) {
+            Log.d("NoteEditor", "URI为空，返回默认分类");
+            return defaultCategory;
+        }
+
+        Cursor cursor = null;
+        try {
+            String[] projection = new String[]{NotePad.Notes.COLUMN_NAME_CATEGORY};
+            Log.d("NoteEditor", "查询数据库分类...");
+
+            cursor = getContentResolver().query(mUri, projection, null, null, null);
+
+            if (cursor != null) {
+                Log.d("NoteEditor", "查询到 " + cursor.getCount() + " 条记录");
+                if (cursor.moveToFirst()) {
+                    int columnIndex = cursor.getColumnIndex(NotePad.Notes.COLUMN_NAME_CATEGORY);
+                    Log.d("NoteEditor", "category列索引: " + columnIndex);
+
+                    if (columnIndex >= 0) {
+                        String category = cursor.getString(columnIndex);
+                        Log.d("NoteEditor", "从数据库读取的分类: '" + category + "'");
+
+                        if (category != null && !category.trim().isEmpty()) {
+                            mCurrentCategory = category;
+                            Log.d("NoteEditor", "保存到成员变量: " + category);
+                            return category;
+                        } else {
+                            Log.d("NoteEditor", "数据库分类为空或空字符串");
+                        }
+                    } else {
+                        Log.w("NoteEditor", "没有找到category列");
+                    }
+                } else {
+                    Log.w("NoteEditor", "cursor.moveToFirst() 失败");
+                }
+            } else {
+                Log.e("NoteEditor", "查询返回null cursor");
+            }
+        } catch (Exception e) {
+            Log.e("NoteEditor", "查询分类异常", e);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        Log.d("NoteEditor", "返回默认分类: " + defaultCategory);
+        return defaultCategory;
+    }
+
+    // 更新笔记分类
+    // 更新笔记分类
+    private void updateNoteCategory(String category) {
+        // 保存到成员变量
+        mCurrentCategory = category;
+
+        // 更新UI
+        if (btnCategory != null) {
+            btnCategory.setText(category);
+        }
+
+        // 如果是已存在的笔记，立即更新数据库
+        if (mState == STATE_EDIT && mUri != null) {
+            try {
+                ContentValues values = new ContentValues();
+                values.put(NotePad.Notes.COLUMN_NAME_CATEGORY, category);
+                values.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, System.currentTimeMillis());
+
+                int rows = getContentResolver().update(mUri, values, null, null);
+                Log.d("NoteEditor", "分类更新结果: " + rows + " 行");
+            } catch (Exception e) {
+                Log.e("NoteEditor", "更新分类失败", e);
+            }
+        }
+
+        Toast.makeText(this, "分类已设置为: " + category, Toast.LENGTH_SHORT).show();
+    }
+
+
+
+
 }

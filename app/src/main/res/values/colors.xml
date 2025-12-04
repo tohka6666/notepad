@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 浅色主题颜色 -->
+    <color name="light_background">#FFFFFF</color>
+    <color name="light_text_primary">#212121</color>
+    <color name="light_text_secondary">#757575</color>
+    <color name="light_primary">#3F51B5</color>
+    <color name="light_primary_dark">#303F9F</color>
+    <color name="light_accent">#FF4081</color>
+
+    <!-- 深色主题颜色 -->
+    <color name="dark_background">#303030</color>
+    <color name="dark_text_primary">#FFFFFF</color>
+    <color name="dark_text_secondary">#B0B0B0</color>
+    <color name="dark_primary">#212121</color>
+    <color name="dark_primary_dark">#000000</color>
+    <color name="dark_accent">#FF4081</color>
+
+    <!-- 蓝色主题颜色 -->
+    <color name="blue_background">#E3F2FD</color>
+    <color name="blue_text_primary">#0D47A1</color>
+    <color name="blue_text_secondary">#5472D3</color>
+    <color name="blue_primary">#2196F3</color>
+    <color name="blue_primary_dark">#1976D2</color>
+    <color name="blue_accent">#448AFF</color>
+
+    <!-- 绿色主题颜色 -->
+    <color name="green_background">#E8F5E9</color>
+    <color name="green_text_primary">#1B5E20</color>
+    <color name="green_text_secondary">#4CAF50</color>
+    <color name="green_primary">#4CAF50</color>
+    <color name="green_primary_dark">#388E3C</color>
+    <color name="green_accent">#69F0AE</color>
+
+    <!-- 紫色主题颜色 -->
+    <color name="purple_background">#F3E5F5</color>
+    <color name="purple_text_primary">#4A148C</color>
+    <color name="purple_text_secondary">#7B1FA2</color>
+    <color name="purple_primary">#9C27B0</color>
+    <color name="purple_primary_dark">#7B1FA2</color>
+    <color name="purple_accent">#E040FB</color>
+
+    <!-- 橙色主题颜色 -->
+    <color name="orange_background">#FFF3E0</color>
+    <color name="orange_text_primary">#E65100</color>
+    <color name="orange_text_secondary">#F57C00</color>
+    <color name="orange_primary">#FF9800</color>
+    <color name="orange_primary_dark">#F57C00</color>
+    <color name="orange_accent">#FFAB40</color>
+</resources>

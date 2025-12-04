@@ -1,15 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_save"
-          android:icon="@drawable/ic_menu_save"
-          android:alphabeticShortcut='s'
-          android:title="@string/menu_save"
-          android:showAsAction="ifRoom|withText" />
-    <item android:id="@+id/menu_revert"
-          android:icon="@drawable/ic_menu_revert"
-          android:title="@string/menu_revert" />
-    <item android:id="@+id/menu_delete"
-          android:icon="@drawable/ic_menu_delete"
-          android:title="@string/menu_delete"
-          android:showAsAction="ifRoom|withText" />
+
+    <!-- 原有菜单项 -->
+    <item
+        android:id="@+id/menu_save"
+        android:title="保存"
+        android:icon="@android:drawable/ic_menu_save"
+        android:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_delete"
+        android:title="删除"
+        android:icon="@android:drawable/ic_menu_delete"
+        android:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_revert"
+        android:title="取消"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:showAsAction="ifRoom" />
+
+    <!-- 新增分类菜单项 -->
+    <item
+        android:id="@+id/menu_category"
+        android:title="分类"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:showAsAction="ifRoom" />
+
 </menu>

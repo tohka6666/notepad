@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 基础主题 -->
+    <style name="AppTheme" parent="@android:style/Theme.Light">
+        <!-- 基础设置 -->
+    </style>
+
+    <!-- 浅色主题 -->
+    <style name="Theme_Light" parent="@android:style/Theme.Light">
+        <!-- 默认浅色主题，无需额外设置 -->
+    </style>
+
+    <!-- 深色主题 -->
+    <style name="Theme_Dark" parent="@android:style/Theme.Light">
+        <item name="android:windowBackground">@color/dark_background</item>
+        <item name="android:colorBackground">@color/dark_background</item>
+        <item name="android:textColorPrimary">@color/dark_text_primary</item>
+        <item name="android:textColorSecondary">@color/dark_text_secondary</item>
+    </style>
+
+    <!-- 蓝色主题 -->
+    <style name="Theme_Blue" parent="@android:style/Theme.Light">
+        <item name="android:windowBackground">@color/blue_background</item>
+        <item name="android:colorBackground">@color/blue_background</item>
+        <item name="android:textColorPrimary">@color/blue_text_primary</item>
+        <item name="android:textColorSecondary">@color/blue_text_secondary</item>
+    </style>
+
+    <!-- 绿色主题 -->
+    <style name="Theme_Green" parent="@android:style/Theme.Light">
+        <item name="android:windowBackground">@color/green_background</item>
+        <item name="android:colorBackground">@color/green_background</item>
+        <item name="android:textColorPrimary">@color/green_text_primary</item>
+        <item name="android:textColorSecondary">@color/green_text_secondary</item>
+    </style>
+
+    <!-- 紫色主题 -->
+    <style name="Theme_Purple" parent="@android:style/Theme.Light">
+        <item name="android:windowBackground">@color/purple_background</item>
+        <item name="android:colorBackground">@color/purple_background</item>
+        <item name="android:textColorPrimary">@color/purple_text_primary</item>
+        <item name="android:textColorSecondary">@color/purple_text_secondary</item>
+    </style>
+
+    <!-- 橙色主题 -->
+    <style name="Theme_Orange" parent="@android:style/Theme.Light">
+        <item name="android:windowBackground">@color/orange_background</item>
+        <item name="android:colorBackground">@color/orange_background</item>
+        <item name="android:textColorPrimary">@color/orange_text_primary</item>
+        <item name="android:textColorSecondary">@color/orange_text_secondary</item>
+    </style>
+</resources>
