@@ -1,3 +1,5 @@
-# NotePad
-项目来自于官方早期的数据库操作的基本教程。
-更多的解析参考[Android Sample--NotePad解析](https://blog.csdn.net/llfjfz/article/details/67638499)
+拓展基本功能：
+（一）.笔记条目增加时间戳显示
+功能要求：
+新建笔记保存新建时间并显示，并在修改笔记后更新为修改时间。
+实现：
