@@ -1,4 +1,4 @@
-拓展基本功能：
+
 （一）笔记条目增加时间戳显示  
 功能要求：  
 新建笔记保存新建时间并显示，并在修改笔记后更新为修改时间。  
@@ -64,16 +64,16 @@ NoteEditor中的updateNote方法：
         }
     }
 ```
-实现效果截图：
+实现效果截图：  
 
 <img width="355" height="213" alt="image" src="https://github.com/user-attachments/assets/22bfe1f5-9bcf-441b-b84d-0798a3572810" />
 
-（二）笔记查询功能
-功能要求：
-可以根据标题和内容摘要对笔记进行搜索筛选。
+（二）笔记查询功能  
+功能要求：  
+可以根据标题和内容摘要对笔记进行搜索筛选。  
 
-实现：
-先在笔记上方添加笔记搜索框
+实现：  
+先在笔记上方添加笔记搜索框  
 ```
 <item
         android:id="@+id/menu_search"
@@ -150,15 +150,15 @@ public boolean onCreateOptionsMenu(Menu menu) {
         return super.onCreateOptionsMenu(menu);
     }
 ```
-实现效果截图：
+实现效果截图：  
 
 <img width="530" height="721" alt="image" src="https://github.com/user-attachments/assets/09bc4612-bc40-4404-b2af-99c0cdfdbc73" />
 
 
-（三）ui美化
-功能要求：提供几种不同主题，让用户能够选择不同的ui界面
-功能实现：
-先在菜单中添加主题选择按钮：
+（三）ui美化  
+功能要求：提供几种不同主题，让用户能够选择不同的ui界面  
+功能实现：  
+先在菜单中添加主题选择按钮：  
 ```
 <item
         android:id="@+id/menu_theme"
@@ -444,11 +444,11 @@ public class ThemeUtils {
 <img width="526" height="928" alt="image" src="https://github.com/user-attachments/assets/aff5d293-0603-4340-ad0b-77d8a1cbce23" />
 
 
-（四）分类管理
-功能要求：对笔记进行分类管理，能够进行分类筛选
+（四）分类管理  
+功能要求：对笔记进行分类管理，能够进行分类筛选  
 
-功能实现：
-添加分类筛选框
+功能实现：  
+添加分类筛选框  
 ```xml
 <TextView
         android:id="@+id/text_category"
@@ -608,7 +608,7 @@ public class CategoryUtils {
 ```
 
 
-实现效果截图：
+实现效果截图：  
 <img width="527" height="753" alt="image" src="https://github.com/user-attachments/assets/6a5f2c67-bde1-4e6c-a4f9-931d9e80f30a" />
 <img width="515" height="603" alt="image" src="https://github.com/user-attachments/assets/ace7b535-35b6-44f9-b2bb-2a6f3b0562df" />
 
