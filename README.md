@@ -432,17 +432,6 @@ public class ThemeUtils {
         return THEME_TEXT_COLORS[THEME_LIGHT];
     }
 
-    /**
-     * 获取主题的背景颜色
-     * @param themeIndex 主题索引
-     * @return 背景颜色值
-     */
-    public static int getBackgroundColor(int themeIndex) {
-        if (themeIndex >= 0 && themeIndex < THEME_BACKGROUND_COLORS.length) {
-            return THEME_BACKGROUND_COLORS[themeIndex];
-        }
-        return THEME_BACKGROUND_COLORS[THEME_LIGHT];
-    }
 }
 ```
 
@@ -453,4 +442,175 @@ public class ThemeUtils {
 <img width="526" height="963" alt="image" src="https://github.com/user-attachments/assets/f5e7cab6-b6e6-459c-893d-c4f7d5a9c467" />
 
 <img width="526" height="928" alt="image" src="https://github.com/user-attachments/assets/aff5d293-0603-4340-ad0b-77d8a1cbce23" />
+
+
+（四）分类管理
+功能要求：对笔记进行分类管理，能够进行分类筛选
+
+功能实现：
+添加分类筛选框
+```xml
+<TextView
+        android:id="@+id/text_category"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="8dp"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"/>
+```
+
+在数据库中添加分类字段
+```
+private static final String[] READ_NOTE_PROJECTION = new String[] {
+            NotePad.Notes._ID,               // Projection position 0, the note's id
+            NotePad.Notes.COLUMN_NAME_NOTE,  // Projection position 1, the note's content
+            NotePad.Notes.COLUMN_NAME_TITLE, // Projection position 2, the note's title
+            NotePad.Notes.COLUMN_NAME_CATEGORY
+
+    };
+```
+
+添加setupCategoryFilter方法，获取所有分类
+```
+    private void setupCategoryFilter() {
+        categorySpinner = (Spinner) findViewById(R.id.category_spinner);
+
+        List<String> categories = CategoryUtils.getAllCategories(this);
+        categories.add(0, "全部笔记");
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, categories);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        categorySpinner.setAdapter(adapter);
+
+        categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selected = (String) parent.getItemAtPosition(position);
+                if ("全部笔记".equals(selected)) {
+                    currentCategory = null;
+                } else {
+                    currentCategory = selected;
+                }
+                loadNotes(); // 重新加载笔记
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                currentCategory = null;
+            }
+        });
+    }
+```
+
+在loadNotes中添加分类筛选
+```
+else if (currentCategory != null && !"全部笔记".equals(currentCategory)) {
+    selection = NotePad.Notes.COLUMN_NAME_CATEGORY + " = ?";
+    selectionArgs = new String[]{currentCategory};
+}else {
+    setTitle(getText(R.string.notes_title));
+}
+```
+
+添加CategoryUtils工具类
+```
+public class CategoryUtils {
+
+    private static final String PREF_CATEGORIES = "note_categories";
+    private static final String TAG = "CategoryUtils";
+
+    // 初始化默认分类
+    public static void initDefaultCategories(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        if (!prefs.contains(PREF_CATEGORIES)) {
+            Set<String> defaultCategories = new HashSet<>();
+            defaultCategories.add("默认");
+            defaultCategories.add("工作");
+            defaultCategories.add("学习");
+            defaultCategories.add("生活");
+            defaultCategories.add("个人");
+            defaultCategories.add("重要");
+
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putStringSet(PREF_CATEGORIES, defaultCategories);
+            editor.apply();
+
+            Log.d(TAG, "初始化默认分类完成");
+        }
+    }
+
+    // 获取所有分类
+    public static List<String> getAllCategories(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        Set<String> categories = prefs.getStringSet(PREF_CATEGORIES, new HashSet<String>());
+
+        List<String> result = new ArrayList<>(categories);
+
+        // 确保包含默认分类
+        if (!result.contains("默认")) {
+            result.add(0, "默认");
+        }
+
+        return result;
+    }
+
+    // 添加分类
+    public static boolean addCategory(Context context, String category) {
+        if (category == null || category.trim().isEmpty()) {
+            return false;
+        }
+
+        category = category.trim();
+        if (category.equals("默认")) {
+            return false; // 不能添加"默认"分类，因为它已经存在
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        Set<String> categories = prefs.getStringSet(PREF_CATEGORIES, new HashSet<String>());
+
+        // 创建新的Set（StringSet不可直接修改）
+        Set<String> newCategories = new HashSet<>(categories);
+        if (newCategories.add(category)) {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putStringSet(PREF_CATEGORIES, newCategories);
+            return editor.commit();
+        }
+
+        return false;
+    }
+
+    // 删除分类
+    public static boolean deleteCategory(Context context, String category) {
+        if ("默认".equals(category)) {
+            return false; // 不能删除默认分类
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        Set<String> categories = prefs.getStringSet(PREF_CATEGORIES, new HashSet<String>());
+
+        Set<String> newCategories = new HashSet<>(categories);
+        if (newCategories.remove(category)) {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putStringSet(PREF_CATEGORIES, newCategories);
+            return editor.commit();
+        }
+
+        return false;
+    }
+
+    // 获取分类数量
+    public static int getCategoryCount(Context context) {
+        return getAllCategories(context).size();
+    }
+}
+```
+
+
+实现效果截图：
+<img width="527" height="753" alt="image" src="https://github.com/user-attachments/assets/6a5f2c67-bde1-4e6c-a4f9-931d9e80f30a" />
+<img width="515" height="603" alt="image" src="https://github.com/user-attachments/assets/ace7b535-35b6-44f9-b2bb-2a6f3b0562df" />
+
+
 
