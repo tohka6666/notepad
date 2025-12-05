@@ -83,7 +83,7 @@ NoteEditor中的updateNote方法：
         android:showAsAction="ifRoom|collapseActionView" />
 ```
 在noteslist中添加搜索方法
-```
+```java
 if (mSearchQuery != null && !mSearchQuery.isEmpty()) {
             selection = NotePad.Notes.COLUMN_NAME_TITLE + " LIKE ? OR " +
                     NotePad.Notes.COLUMN_NAME_NOTE + " LIKE ?";
@@ -97,7 +97,7 @@ if (mSearchQuery != null && !mSearchQuery.isEmpty()) {
         }
 ```
 设置搜索菜单：
-```
+```java
 public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate menu from XML resource
         MenuInflater inflater = getMenuInflater();
@@ -167,7 +167,7 @@ public boolean onCreateOptionsMenu(Menu menu) {
         app:showAsAction="ifRoom" />
 ```
 在onCreate方法中调用主题应用函数
-```
+```java
 private void applyThemeToUI() {
         // 获取当前主题的颜色
         int textColor = ThemeUtils.getCurrentTextColor(this);
@@ -218,7 +218,7 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     }
 ```
 添加ThemeUtils工具类
-```
+```java
 public class ThemeUtils {
 
     // 主题常量
@@ -461,7 +461,7 @@ public class ThemeUtils {
 ```
 
 在数据库中添加分类字段
-```
+```java
 private static final String[] READ_NOTE_PROJECTION = new String[] {
             NotePad.Notes._ID,               // Projection position 0, the note's id
             NotePad.Notes.COLUMN_NAME_NOTE,  // Projection position 1, the note's content
@@ -472,7 +472,7 @@ private static final String[] READ_NOTE_PROJECTION = new String[] {
 ```
 
 添加setupCategoryFilter方法，获取所有分类
-```
+```java
     private void setupCategoryFilter() {
         categorySpinner = (Spinner) findViewById(R.id.category_spinner);
 
@@ -505,7 +505,7 @@ private static final String[] READ_NOTE_PROJECTION = new String[] {
 ```
 
 在loadNotes中添加分类筛选
-```
+```java
 else if (currentCategory != null && !"全部笔记".equals(currentCategory)) {
     selection = NotePad.Notes.COLUMN_NAME_CATEGORY + " = ?";
     selectionArgs = new String[]{currentCategory};
@@ -515,7 +515,7 @@ else if (currentCategory != null && !"全部笔记".equals(currentCategory)) {
 ```
 
 添加CategoryUtils工具类
-```
+```java
 public class CategoryUtils {
 
     private static final String PREF_CATEGORIES = "note_categories";
