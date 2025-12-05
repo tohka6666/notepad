@@ -5,9 +5,16 @@
 实现：
 (1)在notelist_item中添加一个TextView用来显示时间
 
+```xml
 <TextView android:id="@+id/timestamp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:layout_marginTop="4dp" />
-  
+```
+(2)确保时间戳正确显示
+```java
+TextView timestampView = (TextView) view.findViewById(R.id.timestamp);
+long timestamp = cursor.getLong(COLUMN_INDEX_MODIFICATION_DATE);
+timestampView.setText(formatTimestamp(timestamp));
+```
